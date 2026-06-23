@@ -1,0 +1,6 @@
+{
+  "name": "Artscapes",
+  "description": "High-definition visual art screensaver and wallpaper gallery.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
