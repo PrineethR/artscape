@@ -9,13 +9,40 @@ const API_URL = 'https://api.artic.edu/api/v1/artworks/search';
 // We'll fetch 25 public domain artworks that have images.
 export async function fetchArtworks(): Promise<Artwork[]> {
   try {
-    const response = await fetch('/api/artworks');
-    const data = await response.json();
-    if (!Array.isArray(data)) {
-      console.error('API did not return an array:', data);
+    const searchRes = await fetch(
+      "https://collectionapi.metmuseum.org/public/collection/v1/search?departmentId=11&hasImages=true&isHighlight=true&q=paintings"
+    );
+    const searchData = await searchRes.json();
+    
+    if (!searchData.objectIDs || searchData.objectIDs.length === 0) {
       return [];
     }
-    return data;
+    
+    const idsToFetch = searchData.objectIDs.slice(0, 25);
+    
+    const artworksPromises = idsToFetch.map(async (id: number) => {
+      const objRes = await fetch(`https://collectionapi.metmuseum.org/public/collection/v1/objects/${id}`);
+      return objRes.json();
+    });
+
+    const objectsData = await Promise.all(artworksPromises);
+
+    const fetchedArtworks = objectsData
+      .filter((item: any) => item.primaryImage)
+      .map((item: any) => {
+        return {
+          id: item.objectID.toString(),
+          title: item.title || "Unknown Title",
+          artist: item.artistDisplayName || "Unknown Artist",
+          year: item.objectDate || "Unknown Year",
+          description: item.medium + ". " + (item.creditLine || ""),
+          imageUrl: item.primaryImage,
+          thumbnailUrl: item.primaryImageSmall,
+          similarIds: [], 
+        };
+      });
+
+    return fetchedArtworks;
   } catch (error) {
     console.error('Failed to fetch artworks:', error);
     return [];

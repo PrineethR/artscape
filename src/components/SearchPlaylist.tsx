@@ -27,11 +27,41 @@ export function SearchPlaylist({ artworks, onAddArtworks, onClose, playlist, onU
     const timer = setTimeout(async () => {
       setIsSearching(true);
       try {
-        const response = await fetch(`/api/search?q=${encodeURIComponent(searchTerm)}`);
-        const data = await response.json();
-        if (Array.isArray(data)) {
-          setSearchResults(data);
-          onAddArtworks(data);
+        const searchRes = await fetch(
+          `https://collectionapi.metmuseum.org/public/collection/v1/search?hasImages=true&q=${encodeURIComponent(searchTerm)}`
+        );
+        const searchData = await searchRes.json();
+        
+        let fetchedData = [];
+        if (searchData.objectIDs && searchData.objectIDs.length > 0) {
+          const idsToFetch = searchData.objectIDs.slice(0, 15);
+          
+          const artworksPromises = idsToFetch.map(async (id: number) => {
+            const objRes = await fetch(`https://collectionapi.metmuseum.org/public/collection/v1/objects/${id}`);
+            return objRes.json();
+          });
+
+          const objectsData = await Promise.all(artworksPromises);
+
+          fetchedData = objectsData
+            .filter((item: any) => item.primaryImage)
+            .map((item: any) => {
+              return {
+                id: item.objectID.toString(),
+                title: item.title || "Unknown Title",
+                artist: item.artistDisplayName || "Unknown Artist",
+                year: item.objectDate || "Unknown Year",
+                description: item.medium + ". " + (item.creditLine || ""),
+                imageUrl: item.primaryImage,
+                thumbnailUrl: item.primaryImageSmall,
+                similarIds: [], 
+              };
+            });
+        }
+        
+        if (Array.isArray(fetchedData)) {
+          setSearchResults(fetchedData);
+          onAddArtworks(fetchedData);
         }
       } catch (error) {
         console.error('Search failed:', error);
