@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    
+    <!-- SEO Optimization -->
+    <title>Artscapes — High-Definition Masterpiece screensaver</title>
+    <meta name="description" content="A premium, immersive, and fast public domain visual art screensaver and ambient wallpaper exhibition gallery." />
+    
+    <!-- Stylesheets & Fonts -->
+    <link rel="stylesheet" href="./styles.css" />
+    
+    <!-- Lucide Icons CDN -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+  </head>
+  <body>
+
+    <!-- Curating Loader Screen -->
+    <div id="loading-screen">
+      <div class="loader-spinner"></div>
+      <p class="loader-text">Curating Exhibition...</p>
+    </div>
+
+    <!-- Gallery Root Container -->
+    <div id="gallery-root">
+      
+      <!-- Ambient Backglow Effects -->
+      <div class="glow-container">
+        <div class="glow-1"></div>
+        <div class="glow-2"></div>
+      </div>
+
+      <!-- Main Image Presentation Layer -->
+      <div class="image-container">
+        <img id="bg-blur-image" class="bg-blur-image" src="" alt="Blurred Art Background" />
+        <img id="main-artwork-image" class="main-artwork-image" src="" alt="Masterpiece Artwork" />
+      </div>
+
+      <!-- Navigation Hotspots -->
+      <div id="nav-left" class="nav-zone nav-zone-left">
+        <button class="nav-arrow button-like" title="Previous Painting">
+          <i data-lucide="chevron-left"></i>
+        </button>
+      </div>
+      
+      <!-- Interactive UI Overlay Layer -->
+      <div class="ui-layer">
+        
+        <!-- Top Navigation Bar -->
+        <header class="top-bar">
+          <div class="logo-indicator">
+            <div class="logo-dot-outer">
+              <div class="logo-dot-inner"></div>
+            </div>
+            <span style="font-weight: 500; font-size: 0.95rem; tracking: 0.1em; text-transform: uppercase;">Artscapes</span>
+          </div>
+          
+          <div class="top-bar-controls">
+            <button id="btn-play" class="icon-btn" title="Toggle Slide Sequence (Play/Pause)">
+              <i data-lucide="pause"></i>
+            </button>
+            <button id="btn-fav" class="icon-btn" title="Add to Favorites">
+              <i data-lucide="heart"></i>
+            </button>
+            <button id="btn-download" class="icon-btn" title="View Full High-Resolution Masterpiece">
+              <i data-lucide="download"></i>
+            </button>
+            <button id="btn-fullscreen" class="icon-btn" title="Toggle Fullscreen Mode">
+              <i data-lucide="maximize"></i>
+            </button>
+          </div>
+        </header>
+
+        <!-- Bottom Navigation Bar -->
+        <footer class="bottom-bar">
+          <button id="btn-search-trigger" class="search-trigger-btn button-like" title="Search & Curate Playlist">
+            <i data-lucide="search" size="18"></i>
+            <span>Search & Playlist</span>
+          </button>
+        </footer>
+
+      </div>
+
+      <!-- Information Details Drawer (Slides from bottom) -->
+      <div id="details-drawer" class="details-drawer">
+        <button id="drawer-close" class="drawer-close-btn button-like" title="Return to Artwork Screen">
+          <i data-lucide="chevron-up"></i>
+        </button>
+        
+        <div class="details-content-card">
+          <div class="details-grid">
+            
+            <!-- Left Panel: Text Metadata -->
+            <div class="details-main-info">
+              <h1 id="art-title" class="art-title">Masterpiece Title</h1>
+              <p id="art-desc" class="art-description">Artwork details, medium, dimensions, and collections info.</p>
+              <div class="art-meta">
+                <span>Artist: <strong id="art-artist" style="font-weight: 500; color: #fff;">Artist Name</strong></span>
+                <span class="divider">/</span>
+                <span>Year: <strong id="art-year" style="font-weight: 500; color: #fff;">Unknown</strong></span>
+              </div>
+            </div>
+            
+            <!-- Right Panel: Similar series carousel -->
+            <div class="similar-section">
+              <div class="similar-header">Similar in Series</div>
+              <div id="similar-carousel" class="similar-carousel no-scrollbar">
+                <!-- Javascript will inject similar cards here -->
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- Search & Curate Sequence Modal Overlay -->
+      <div id="search-modal" class="modal-overlay">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content">
+          
+          <!-- Search input header -->
+          <div class="modal-header">
+            <div class="search-input-wrapper">
+              <i data-lucide="search" class="search-input-icon"></i>
+              <input id="search-input" type="text" class="search-input-field" placeholder="Search Met Museum artworks..." autocomplete="off">
+            </div>
+            <button id="search-close" class="icon-btn" title="Close Overlay"><i data-lucide="x"></i></button>
+          </div>
+
+          <!-- Exhibition Gallery Grid -->
+          <div class="modal-body">
+            <div class="section-title-bar">
+              <span class="section-title">Available in Exhibition</span>
+              <span id="playlist-count" class="playlist-count">0 items</span>
+            </div>
+            
+            <div id="search-results-grid" class="gallery-grid">
+              <!-- Javascript injects search results cards here -->
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Scripts -->
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>
