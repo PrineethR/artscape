@@ -284,7 +284,6 @@ const elBtnSettings = document.getElementById('btn-settings');
 const elSettingsDropdown = document.getElementById('settings-dropdown');
 const elSettingOptions = document.querySelectorAll('.setting-option');
 const elBtnFav = document.getElementById('btn-fav');
-const elBtnDownload = document.getElementById('btn-download');
 const elBtnFullscreen = document.getElementById('btn-fullscreen');
 const elBtnSearchTrigger = document.getElementById('btn-search-trigger');
 const elNavLeft = document.getElementById('nav-left');
@@ -674,14 +673,6 @@ function toggleFavorite() {
   renderArtwork(currentIndex);
 }
 
-// Download Artwork
-function downloadArtwork() {
-  const currentArt = database[currentIndex];
-  if (currentArt) {
-    window.open(currentArt.imageUrl, '_blank', 'noopener,noreferrer');
-  }
-}
-
 // Fullscreen
 function toggleFullscreen() {
   if (!document.fullscreenElement) {
@@ -936,10 +927,6 @@ function initEventListeners() {
   elBtnFav.addEventListener('click', (e) => {
     e.stopPropagation();
     toggleFavorite();
-  });
-  elBtnDownload.addEventListener('click', (e) => {
-    e.stopPropagation();
-    downloadArtwork();
   });
   elBtnFullscreen.addEventListener('click', (e) => {
     e.stopPropagation();
