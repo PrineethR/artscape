@@ -276,8 +276,8 @@ let loadedIds = new Set(database.map(a => a.id));
 let isFetchingStream = false;
 
 // DOM Elements
-const elBgBlur = document.getElementById('bg-blur-image');
-const elMainArt = document.getElementById('main-artwork-image');
+const elBgLayer = document.getElementById('bg-layer');
+const elMainLayer = document.getElementById('main-layer');
 const elImageContainer = document.querySelector('.image-container');
 const elUILayer = document.querySelector('.ui-layer');
 const elBtnSettings = document.getElementById('btn-settings');
@@ -318,6 +318,7 @@ function init() {
   
   // Render first artwork
   renderArtwork(0);
+  updatePlayButtonUI();
   
   // Initialize background remote pre-fetching for infinite stream
   initInfiniteStream();
@@ -468,21 +469,46 @@ function renderArtwork(index) {
   if (!art) return;
   
   // Update images with elegant crossfade
+  stopAutoplay();
+  
   const tempBlur = new Image();
   tempBlur.onload = () => {
-    elBgBlur.src = art.thumbnailUrl;
-    elBgBlur.classList.add('active');
+    const newBlur = document.createElement('img');
+    newBlur.className = 'bg-blur-image';
+    newBlur.src = art.thumbnailUrl;
+    elBgLayer.appendChild(newBlur);
+    
+    // Trigger reflow to apply transition
+    void newBlur.offsetWidth;
+    newBlur.classList.add('active');
+    
+    // Cleanup old images after transition
+    setTimeout(() => {
+      const oldBgs = elBgLayer.querySelectorAll('.bg-blur-image:not(:last-child)');
+      oldBgs.forEach(el => el.remove());
+    }, 3000);
   };
   tempBlur.src = art.thumbnailUrl;
-  
-  elMainArt.classList.remove('active');
-  stopAutoplay();
   
   // Pre-load main image to prevent flashes
   const tempMain = new Image();
   tempMain.onload = () => {
-    elMainArt.src = art.imageUrl;
-    elMainArt.classList.add('active');
+    const newMain = document.createElement('img');
+    newMain.className = 'main-artwork-image';
+    newMain.src = art.imageUrl;
+    newMain.alt = art.title;
+    elMainLayer.appendChild(newMain);
+    
+    // Trigger reflow to apply transition
+    void newMain.offsetWidth;
+    newMain.classList.add('active');
+    
+    // Cleanup old images after transition
+    setTimeout(() => {
+      const oldMains = elMainLayer.querySelectorAll('.main-artwork-image:not(:last-child)');
+      oldMains.forEach(el => el.remove());
+    }, 3000);
+    
     if (autoPlay) {
       startAutoplay();
     }
@@ -609,10 +635,27 @@ function stopAutoplay() {
   }
 }
 
+function updatePlayButtonUI() {
+  const elBtnPlay = document.getElementById('btn-play');
+  if (!elBtnPlay) return;
+  if (autoPlay) {
+    elBtnPlay.classList.add('active-state');
+    elBtnPlay.innerHTML = '<i data-lucide="pause"></i>';
+  } else {
+    elBtnPlay.classList.remove('active-state');
+    elBtnPlay.innerHTML = '<i data-lucide="play" style="transform: translateX(1px)"></i>';
+  }
+  lucide.createIcons();
+}
+
 function toggleAutoplay() {
   autoPlay = !autoPlay;
-  startAutoplay();
-  renderArtwork(currentIndex);
+  if (autoPlay) {
+    startAutoplay();
+  } else {
+    stopAutoplay();
+  }
+  updatePlayButtonUI();
 }
 
 // Favorites Toggle
@@ -856,6 +899,14 @@ function initEventListeners() {
   }
   
   // Top Buttons
+  const elBtnPlay = document.getElementById('btn-play');
+  if (elBtnPlay) {
+    elBtnPlay.addEventListener('click', (e) => {
+      e.stopPropagation();
+      toggleAutoplay();
+    });
+  }
+
   elBtnSettings.addEventListener('click', (e) => {
     e.stopPropagation();
     elSettingsDropdown.classList.toggle('active');
