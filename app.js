@@ -269,6 +269,11 @@ let autoplayTimer = null;
 let searchTimeout = null;
 let isSearching = false;
 
+// Infinite Stream State
+let streamObjectIds = [];
+let loadedIds = new Set(database.map(a => a.id));
+let isFetchingStream = false;
+
 // DOM Elements
 const elBgBlur = document.getElementById('bg-blur-image');
 const elMainArt = document.getElementById('main-artwork-image');
@@ -311,6 +316,9 @@ function init() {
   // Render first artwork
   renderArtwork(0);
   
+  // Initialize background remote pre-fetching for infinite stream
+  initInfiniteStream();
+  
   // Fade out loading screen
   setTimeout(() => {
     const loadingScreen = document.getElementById('loading-screen');
@@ -319,6 +327,103 @@ function init() {
       setTimeout(() => loadingScreen.remove(), 800);
     }
   }, 1200);
+}
+
+// Infinite Stream Engine
+async function initInfiniteStream() {
+  try {
+    // Fetch all painting IDs from European Paintings department that have images
+    const searchRes = await fetch("https://collectionapi.metmuseum.org/public/collection/v1/search?departmentId=11&hasImages=true&q=paintings");
+    const searchData = await searchRes.json();
+    
+    if (searchData.objectIDs && searchData.objectIDs.length > 0) {
+      // Shuffle the list of IDs so every session is unique
+      streamObjectIds = shuffleArray(searchData.objectIDs.map(id => id.toString()));
+      
+      // Remove IDs that are already in our pre-baked database
+      streamObjectIds = streamObjectIds.filter(id => !loadedIds.has(id));
+      
+      console.log(`Infinite stream initialized with ${streamObjectIds.length} remote paintings.`);
+      
+      // Start initial prefetch
+      prefetchNextStreamItems();
+    }
+  } catch (error) {
+    console.error("Failed to initialize infinite stream:", error);
+  }
+}
+
+function shuffleArray(array) {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+  return array;
+}
+
+async function prefetchNextStreamItems() {
+  if (isFetchingStream || streamObjectIds.length === 0) return;
+  
+  const currentArt = database[currentIndex];
+  if (!currentArt) return;
+  
+  const playPos = playlist.indexOf(currentArt.id);
+  // If the current artwork is not in the playlist (e.g. searching/curating custom sequence), ignore
+  if (playPos === -1) return;
+  
+  const remainingIndex = playlist.length - 1 - playPos;
+  
+  // If we have fewer than 5 paintings ahead in our queue, fetch the next 5 paintings in the background
+  if (remainingIndex < 5) {
+    isFetchingStream = true;
+    
+    // Take the next 5 IDs from the remote stream list
+    const idsToFetch = streamObjectIds.splice(0, 5);
+    
+    const promises = idsToFetch.map(async (id) => {
+      try {
+        const res = await fetch(`https://collectionapi.metmuseum.org/public/collection/v1/objects/${id}`);
+        return res.json();
+      } catch (e) {
+        return null;
+      }
+    });
+    
+    try {
+      const results = await Promise.all(promises);
+      results.forEach(item => {
+        if (item && item.primaryImage && !loadedIds.has(item.objectID.toString())) {
+          const artwork = {
+            id: item.objectID.toString(),
+            title: item.title || "Unknown Title",
+            artist: item.artistDisplayName || "Unknown Artist",
+            year: item.objectDate || "Unknown Year",
+            description: (item.medium || "") + (item.creditLine ? ". " + item.creditLine : ""),
+            imageUrl: item.primaryImage,
+            thumbnailUrl: item.primaryImageSmall || item.primaryImage,
+            similarIds: []
+          };
+          
+          database.push(artwork);
+          playlist.push(artwork.id);
+          loadedIds.add(artwork.id);
+        }
+      });
+      
+      console.log(`Prefetched batch loaded. Database size: ${database.length}. Playlist size: ${playlist.length}`);
+      
+      // Update playlist manager UI if it is active
+      if (showSearch) {
+        renderPlaylistManager();
+      }
+    } catch (err) {
+      console.error("Error prefetching stream items:", err);
+    } finally {
+      isFetchingStream = false;
+      // Re-trigger prefetch check in case we need more buffer
+      prefetchNextStreamItems();
+    }
+  }
 }
 
 // Load favorites from local storage
@@ -407,6 +512,9 @@ function renderArtwork(index) {
   
   // Re-instantiate Icons
   lucide.createIcons();
+  
+  // Trigger background pre-fetching
+  prefetchNextStreamItems();
 }
 
 // Render Similar list in details
