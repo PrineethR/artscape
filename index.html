@@ -57,9 +57,17 @@
           </div>
           
           <div class="top-bar-controls">
-            <button id="btn-play" class="icon-btn" title="Toggle Slide Sequence (Play/Pause)">
-              <i data-lucide="pause"></i>
-            </button>
+            <div id="settings-dropdown" class="settings-dropdown">
+              <button id="btn-settings" class="icon-btn" title="Settings">
+                <i data-lucide="settings"></i>
+              </button>
+              <div class="settings-menu">
+                <div class="settings-title">Time per Image</div>
+                <button class="setting-option active" data-time="10000">10s</button>
+                <button class="setting-option" data-time="30000">30s</button>
+                <button class="setting-option" data-time="60000">60s</button>
+              </div>
+            </div>
             <button id="btn-fav" class="icon-btn" title="Add to Favorites">
               <i data-lucide="heart"></i>
             </button>

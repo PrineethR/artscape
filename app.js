@@ -266,6 +266,7 @@ let showInfo = false;
 let showSearch = false;
 let uiTimer = null;
 let autoplayTimer = null;
+let autoplayInterval = 10000;
 let searchTimeout = null;
 let isSearching = false;
 
@@ -279,7 +280,9 @@ const elBgBlur = document.getElementById('bg-blur-image');
 const elMainArt = document.getElementById('main-artwork-image');
 const elImageContainer = document.querySelector('.image-container');
 const elUILayer = document.querySelector('.ui-layer');
-const elBtnPlay = document.getElementById('btn-play');
+const elBtnSettings = document.getElementById('btn-settings');
+const elSettingsDropdown = document.getElementById('settings-dropdown');
+const elSettingOptions = document.querySelectorAll('.setting-option');
 const elBtnFav = document.getElementById('btn-fav');
 const elBtnDownload = document.getElementById('btn-download');
 const elBtnFullscreen = document.getElementById('btn-fullscreen');
@@ -473,12 +476,16 @@ function renderArtwork(index) {
   tempBlur.src = art.thumbnailUrl;
   
   elMainArt.classList.remove('active');
+  stopAutoplay();
   
   // Pre-load main image to prevent flashes
   const tempMain = new Image();
   tempMain.onload = () => {
     elMainArt.src = art.imageUrl;
     elMainArt.classList.add('active');
+    if (autoPlay) {
+      startAutoplay();
+    }
   };
   tempMain.src = art.imageUrl;
   
@@ -490,15 +497,6 @@ function renderArtwork(index) {
   } else {
     elBtnFav.classList.remove('active-state');
     elBtnFav.innerHTML = '<i data-lucide="heart"></i>';
-  }
-  
-  // Update Autoplay Button UI
-  if (autoPlay) {
-    elBtnPlay.classList.add('active-state');
-    elBtnPlay.innerHTML = '<i data-lucide="pause"></i>';
-  } else {
-    elBtnPlay.classList.remove('active-state');
-    elBtnPlay.innerHTML = '<i data-lucide="play" style="transform: translateX(1px)"></i>';
   }
   
   // Update Details Drawer Content
@@ -600,7 +598,7 @@ function startAutoplay() {
       if (!showInfo && !showSearch) {
         nextArtwork();
       }
-    }, 10000); // 10 seconds interval
+    }, autoplayInterval);
   }
 }
 
@@ -858,10 +856,32 @@ function initEventListeners() {
   }
   
   // Top Buttons
-  elBtnPlay.addEventListener('click', (e) => {
+  elBtnSettings.addEventListener('click', (e) => {
     e.stopPropagation();
-    toggleAutoplay();
+    elSettingsDropdown.classList.toggle('active');
   });
+
+  document.addEventListener('click', () => {
+    elSettingsDropdown.classList.remove('active');
+  });
+
+  elSettingsDropdown.addEventListener('click', (e) => {
+    e.stopPropagation();
+  });
+
+  elSettingOptions.forEach(opt => {
+    opt.addEventListener('click', (e) => {
+      e.stopPropagation();
+      autoplayInterval = parseInt(opt.getAttribute('data-time'), 10);
+      
+      elSettingOptions.forEach(o => o.classList.remove('active'));
+      opt.classList.add('active');
+      
+      startAutoplay();
+      elSettingsDropdown.classList.remove('active');
+    });
+  });
+
   elBtnFav.addEventListener('click', (e) => {
     e.stopPropagation();
     toggleFavorite();
