@@ -834,7 +834,8 @@ async function performSearch(term) {
   renderPlaylistManager();
   
   try {
-    let url = `https://collectionapi.metmuseum.org/public/collection/v1/search?hasImages=true`;
+    // Force isPublicDomain=true to ensure we only get artworks with accessible, uncopyrighted images
+    let url = `https://collectionapi.metmuseum.org/public/collection/v1/search?hasImages=true&isPublicDomain=true`;
     
     if (filterDepartmentId) {
       url += `&departmentId=${filterDepartmentId}`;
@@ -857,34 +858,48 @@ async function performSearch(term) {
     const data = await res.json();
     
     if (data.objectIDs && data.objectIDs.length > 0) {
-      const ids = data.objectIDs.slice(0, 15);
-      const promises = ids.map(async (id) => {
-        try {
-          const r = await fetch(`https://collectionapi.metmuseum.org/public/collection/v1/objects/${id}`);
-          return r.json();
-        } catch (e) {
-          return null;
-        }
-      });
+      const maxToFetch = Math.min(data.objectIDs.length, 100);
+      let validResults = [];
+      const batchSize = 15;
       
-      const results = await Promise.all(promises);
-      const filtered = results
-        .filter(item => item && item.primaryImage)
-        .map(item => ({
-          id: item.objectID.toString(),
-          title: item.title || "Unknown Title",
-          artist: item.artistDisplayName || "Unknown Artist",
-          year: item.objectDate || "Unknown Year",
-          description: (item.medium || "") + (item.creditLine ? ". " + item.creditLine : ""),
-          imageUrl: item.primaryImage,
-          thumbnailUrl: item.primaryImageSmall || item.primaryImage,
-          similarIds: []
-        }));
+      for (let i = 0; i < maxToFetch; i += batchSize) {
+        const ids = data.objectIDs.slice(i, i + batchSize);
+        const promises = ids.map(async (id) => {
+          try {
+            const r = await fetch(`https://collectionapi.metmuseum.org/public/collection/v1/objects/${id}`);
+            if (!r.ok) return null;
+            return await r.json();
+          } catch (e) {
+            return null;
+          }
+        });
         
-      searchResults = filtered;
+        const results = await Promise.all(promises);
+        const filtered = results
+          .filter(item => item && item.primaryImage)
+          .map(item => ({
+            id: item.objectID.toString(),
+            title: item.title || "Unknown Title",
+            artist: item.artistDisplayName || "Unknown Artist",
+            year: item.objectDate || "Unknown Year",
+            description: (item.medium || "") + (item.creditLine ? ". " + item.creditLine : ""),
+            imageUrl: item.primaryImage,
+            thumbnailUrl: item.primaryImageSmall || item.primaryImage,
+            similarIds: []
+          }));
+          
+        validResults = validResults.concat(filtered);
+        
+        // Stop if we've found enough valid images to show the user
+        if (validResults.length >= 15) {
+          break;
+        }
+      }
+        
+      searchResults = validResults.slice(0, 15);
       
       // Inject search results into global database if not already present
-      filtered.forEach(item => {
+      searchResults.forEach(item => {
         if (!database.some(a => a.id === item.id)) {
           database.push(item);
         }
