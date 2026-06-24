@@ -136,6 +136,41 @@
             <button id="search-close" class="icon-btn" title="Close Overlay"><i data-lucide="x"></i></button>
           </div>
 
+          <!-- Search Filters & Presets -->
+          <div class="search-filters-container">
+            <div class="filters-row">
+              <select id="filter-department" class="filter-select">
+                <option value="">All Departments</option>
+                <option value="11">European Paintings</option>
+                <option value="21">Modern Art</option>
+                <option value="6">Asian Art</option>
+                <option value="15">The Robert Lehman Collection</option>
+                <option value="1">American Decorative Arts</option>
+              </select>
+
+              <select id="filter-target" class="filter-select">
+                <option value="all">All Fields</option>
+                <option value="title">Title Only</option>
+                <option value="tags">Tags Only</option>
+              </select>
+
+              <label class="filter-toggle-label">
+                <input type="checkbox" id="filter-highlight" class="filter-toggle-input">
+                <span class="filter-toggle-text">Highlights Only</span>
+              </label>
+            </div>
+            
+            <div class="presets-row no-scrollbar">
+              <span style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em; padding-right: 0.5rem;">Curated:</span>
+              <button class="preset-pill" data-preset="abstract" data-dept="21">Abstract</button>
+              <button class="preset-pill" data-preset="impressionism" data-dept="11">Impressionism</button>
+              <button class="preset-pill" data-preset="renaissance" data-dept="11">Renaissance</button>
+              <button class="preset-pill" data-preset="landscape" data-dept="11">Landscape</button>
+              <button class="preset-pill" data-preset="portrait" data-dept="11">Portrait</button>
+              <button class="preset-pill" data-preset="ukiyo-e" data-dept="6">Ukiyo-e</button>
+            </div>
+          </div>
+
           <!-- Exhibition Gallery Grid -->
           <div class="modal-body">
             <div class="section-title-bar">

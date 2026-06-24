@@ -270,6 +270,12 @@ let autoplayInterval = 10000;
 let searchTimeout = null;
 let isSearching = false;
 
+// Advanced Search Filters State
+let filterDepartmentId = '';
+let filterSearchTarget = 'all'; // 'all', 'title', 'tags'
+let filterIsHighlight = false;
+let searchResults = [];
+
 // Infinite Stream State
 let streamObjectIds = [];
 let loadedIds = new Set(database.map(a => a.id));
@@ -298,12 +304,17 @@ const elArtYear = document.getElementById('art-year');
 const elArtDesc = document.getElementById('art-desc');
 const elSimilarCarousel = document.getElementById('similar-carousel');
 
-// Modal Elements
 const elSearchModal = document.getElementById('search-modal');
 const elSearchClose = document.getElementById('search-close');
 const elSearchInput = document.getElementById('search-input');
 const elPlaylistCount = document.getElementById('playlist-count');
 const elSearchResultsGrid = document.getElementById('search-results-grid');
+
+// Search Filters DOM Elements
+const elFilterDepartment = document.getElementById('filter-department');
+const elFilterTarget = document.getElementById('filter-target');
+const elFilterHighlight = document.getElementById('filter-highlight');
+const elPresetPills = document.querySelectorAll('.preset-pill');
 
 // Initialize App
 function init() {
@@ -823,7 +834,26 @@ async function performSearch(term) {
   renderPlaylistManager();
   
   try {
-    const res = await fetch(`https://collectionapi.metmuseum.org/public/collection/v1/search?hasImages=true&q=${encodeURIComponent(term)}`);
+    let url = `https://collectionapi.metmuseum.org/public/collection/v1/search?hasImages=true`;
+    
+    if (filterDepartmentId) {
+      url += `&departmentId=${filterDepartmentId}`;
+    }
+    
+    if (filterIsHighlight) {
+      url += `&isHighlight=true`;
+    }
+    
+    if (filterSearchTarget === 'title') {
+      url += `&title=true`;
+    } else if (filterSearchTarget === 'tags') {
+      url += `&tags=true`;
+    }
+    
+    // Always append q as the last parameter
+    url += `&q=${encodeURIComponent(term)}`;
+
+    const res = await fetch(url);
     const data = await res.json();
     
     if (data.objectIDs && data.objectIDs.length > 0) {
@@ -946,6 +976,9 @@ function initEventListeners() {
   
   // Search input debouncer
   elSearchInput.addEventListener('input', (e) => {
+    // Clear active preset style since user is typing manually
+    elPresetPills.forEach(p => p.classList.remove('active'));
+    
     const val = e.target.value.trim();
     if (searchTimeout) clearTimeout(searchTimeout);
     
@@ -961,6 +994,58 @@ function initEventListeners() {
     }, 500);
   });
   
+  // Advanced Filter Event Listeners
+  function triggerSearch() {
+    const val = elSearchInput.value.trim();
+    if (val.length > 0) {
+      if (searchTimeout) clearTimeout(searchTimeout);
+      performSearch(val);
+    }
+  }
+
+  elFilterDepartment.addEventListener('change', (e) => {
+    filterDepartmentId = e.target.value;
+    triggerSearch();
+  });
+
+  elFilterTarget.addEventListener('change', (e) => {
+    filterSearchTarget = e.target.value;
+    triggerSearch();
+  });
+
+  elFilterHighlight.addEventListener('change', (e) => {
+    filterIsHighlight = e.target.checked;
+    triggerSearch();
+  });
+
+  // Preset Pills Click
+  elPresetPills.forEach(pill => {
+    pill.addEventListener('click', (e) => {
+      e.stopPropagation();
+      
+      // Update UI state
+      elPresetPills.forEach(p => p.classList.remove('active'));
+      pill.classList.add('active');
+      
+      // Update filter values
+      const presetName = pill.getAttribute('data-preset');
+      const deptId = pill.getAttribute('data-dept');
+      
+      filterDepartmentId = deptId;
+      elFilterDepartment.value = deptId;
+      
+      filterSearchTarget = 'all';
+      elFilterTarget.value = 'all';
+      
+      filterIsHighlight = false;
+      elFilterHighlight.checked = false;
+      
+      // Update input and trigger
+      elSearchInput.value = presetName;
+      triggerSearch();
+    });
+  });
+
   // Details Drawer scrolling
   document.addEventListener('wheel', (e) => {
     if (showSearch) return;
